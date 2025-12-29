@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from urllib.parse import urlparse
 
 
-def is_shorten_link(vk_token, user_url):
+def is_regular_link(vk_token, user_url):
     payload = {
         'url': user_url,
         'access_token': vk_token,
@@ -43,7 +43,7 @@ def main():
     vk_token = os.environ['VK_TOKEN']
     user_url = input('Введи ссылку: ')
 
-    if is_shorten_link(vk_token, user_url):
+    if is_regular_link(vk_token, user_url):
         try:
             short_link = shorten_link(vk_token, user_url)
         except KeyError:
