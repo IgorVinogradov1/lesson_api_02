@@ -4,11 +4,22 @@ from dotenv import load_dotenv
 from urllib.parse import urlparse
 
 
-def is_shorten_link(user_url):
+def is_shorten_link(vk_token, user_url):
     result = True
-    if urlparse(user_url).netloc == 'vk.cc':
+    payload = {
+        'url': user_url,
+        'access_token': vk_token,
+        'v': '5.199'
+    }
+    vk_short_link_url = 'https://api.vk.ru/method/utils.getShortLink'
+    response = requests.get(vk_short_link_url, params=payload)
+    response.raise_for_status()
+    try:
+        response.json()['error']
+    except KeyError:
         result = False
-    return result
+    finally:
+        return result
 
 def shorten_link(vk_token, user_url):
     payload = {
@@ -16,8 +27,8 @@ def shorten_link(vk_token, user_url):
         'access_token': vk_token,
         'v': '5.199'
     }
-    url_api = 'https://api.vk.ru/method/utils.getShortLink'
-    response = requests.get(url_api, params=payload)
+    vk_short_link_url = 'https://api.vk.ru/method/utils.getShortLink'
+    response = requests.get(vk_short_link_url, params=payload)
     response.raise_for_status()
     return response.json()['response']['short_url']
 
@@ -27,23 +38,17 @@ def count_click(vk_token, link):
         'access_token': vk_token,
         'v': '5.199'
     }
-    url_api = 'https://api.vk.ru/method/utils.getLinkStats'
-    response = requests.get(url_api, params=payload)
+    vk_link_stats_url = 'https://api.vk.ru/method/utils.getLinkStats'
+    response = requests.get(vk_link_stats_url, params=payload)
     response.raise_for_status()
     return response.json()['response']['stats'][0]['views']
 
 def main():
     load_dotenv()
-    vk_token = os.getenv('VK_TOKEN')
+    vk_token = os.environ['VK_TOKEN']
     user_url = input('Введи ссылку: ')
-    try:
-        response = requests.get(user_url)
-        response.raise_for_status()
-    except requests.exceptions.RequestException:
-        print('Некорректная ссылка!')
-        raise SystemExit
-    check_url = is_shorten_link(user_url)
-    if check_url == True:
+
+    if not is_shorten_link(vk_token, user_url):
         try:
             short_link = shorten_link(vk_token, user_url)
         except KeyError:
