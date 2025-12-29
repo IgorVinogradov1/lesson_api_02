@@ -5,7 +5,6 @@ from urllib.parse import urlparse
 
 
 def is_shorten_link(vk_token, user_url):
-    result = True
     payload = {
         'url': user_url,
         'access_token': vk_token,
@@ -14,12 +13,7 @@ def is_shorten_link(vk_token, user_url):
     vk_short_link_url = 'https://api.vk.ru/method/utils.getShortLink'
     response = requests.get(vk_short_link_url, params=payload)
     response.raise_for_status()
-    try:
-        response.json()['error']
-    except KeyError:
-        result = False
-    finally:
-        return result
+    return 'error' not in response.json()
 
 def shorten_link(vk_token, user_url):
     payload = {
@@ -41,14 +35,15 @@ def count_click(vk_token, link):
     vk_link_stats_url = 'https://api.vk.ru/method/utils.getLinkStats'
     response = requests.get(vk_link_stats_url, params=payload)
     response.raise_for_status()
-    return response.json()['response']['stats'][0]['views']
+    stats = response.json()['response']['stats']
+    return stats[0]['views'] if stats else 0
 
 def main():
     load_dotenv()
     vk_token = os.environ['VK_TOKEN']
     user_url = input('Введи ссылку: ')
 
-    if not is_shorten_link(vk_token, user_url):
+    if is_shorten_link(vk_token, user_url):
         try:
             short_link = shorten_link(vk_token, user_url)
         except KeyError:
@@ -66,7 +61,5 @@ def main():
         else:
             print('Количество кликов по ссылке: ', number_of_views)
 
-
 if __name__ == '__main__':
     main()
-
